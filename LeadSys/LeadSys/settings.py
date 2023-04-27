@@ -130,3 +130,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # specifying our own Custom User Model
 AUTH_USER_MODEL = 'leads.User'
+
+# Configuring Email Backend for Console Logging in dev environment
+EMAIL_BACKEND = "dango.core.mail.backends.console.EmailBackend"
+# EMAIL_BACKEND = "dango.core.mail.backends.smtp.EmailBackend" # for production
+
+# login redirect
+LOGIN_REDIRECT_URL = "/leads"
+
+# login URL
+LOGIN_URL = "/login"
+
+
