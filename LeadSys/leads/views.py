@@ -55,10 +55,10 @@ class LeadCreateView(LoginRequiredMixin,CreateView):
     form_class = LeadModelForm
 
     def get_success_url(self):
-        return reverse("leads:leads-list")
+        return reverse("leads:lead-list")
     
     def form_valid(self,form):
-        # TODO send email
+        # TODO send email using django
         send_mail(
             subject="A lead has been created",
             message="Go to the site to see the new lead",
@@ -90,7 +90,7 @@ class LeadUpdateView(LoginRequiredMixin,UpdateView):
     form_class = LeadModelForm
 
     def get_success_url(self):
-        return reverse("leads:leads-list")
+        return reverse("leads:lead-list")
 
 
 def lead_update(request, pk):
@@ -112,7 +112,7 @@ class LeadDeleteView(LoginRequiredMixin,DeleteView):
     queryset = Lead.objects.all() 
 
     def get_success_url(self):
-        return reverse("leads:leads-list")
+        return reverse("leads:lead-list")
 
 def lead_delete(request,pk):
     lead = Lead.objects.get(id=pk)

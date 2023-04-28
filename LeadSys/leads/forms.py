@@ -8,10 +8,10 @@ User = get_user_model()
 class LeadModelForm(forms.ModelForm):
     class Meta:
         model = Lead
-        field = ('first_name','last_name','age','agent')
+        fields = ('first_name','last_name','age','agent')
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = User 
-        files = ("username")
+        fields = ("username",)
         field_classes = {'username':UsernameField}

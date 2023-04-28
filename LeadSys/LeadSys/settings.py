@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'leads.app.LeadsConfig'
+    'leads.apps.LeadsConfig',
+    'agents.apps.AgentsConfig'
 ]
 
 MIDDLEWARE = [
@@ -132,8 +133,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'leads.User'
 
 # Configuring Email Backend for Console Logging in dev environment
-EMAIL_BACKEND = "dango.core.mail.backends.console.EmailBackend"
-# EMAIL_BACKEND = "dango.core.mail.backends.smtp.EmailBackend" # for production
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend" # for production
 
 # login redirect
 LOGIN_REDIRECT_URL = "/leads"
