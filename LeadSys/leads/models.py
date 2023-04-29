@@ -6,8 +6,12 @@ from django.contrib.auth.models import AbstractUser
 
 # Custom User Model
 class User(AbstractUser):
-    pass
-
+    # these boolean fields will help with managing permissions of the user
+    # specifying type of user whether organiser or agent
+    is_organisor = models.BooleanField(default=True) # owns the entire organization
+    # if you create an account you are by default the organisor of that account
+    is_agent = models.BooleanField(default=False)
+    
 
 # create a user profile model that is linked to a user
 # then link each agent to the parent user profile.
@@ -31,7 +35,13 @@ class Lead(models.Model):
     first_name = models.CharField(max_length=20)
     last_name = models.CharField(max_length=20)
     age = models.IntegerField(default=0)
-    agent = models.ForeignKey(Agent, on_delete=models.CASCADE) # assigning a lead to an agent
+    agent = models.ForeignKey(Agent, null=True, blanK=True, on_delete=models.SET_NULL) # assigning a lead to an agent
+
+    #  since every lead is associated with an agent
+    # we need to track which organisation the agent falls under
+    organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    # this allows us to filter by the organization
+
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
