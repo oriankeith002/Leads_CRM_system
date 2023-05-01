@@ -42,6 +42,9 @@ class Lead(models.Model):
     organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     # this allows us to filter by the organization
 
+    # every lead will be assigned to a category
+    category = models.ForeignKey("Category", related_name="leads", null=True, blank=True, on_delete=models.SET_NULL) 
+
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -53,7 +56,7 @@ class Lead(models.Model):
 # instance is the actual model that was save 
 # created - whether model was created or not
 def post_user_created_signal(sender,instance, created, **kwargs):
-    print(instance)
+    #print(instance)
     if created:
         UserProfile.objects.create(user=instance)
 
@@ -62,7 +65,13 @@ post_save.connect(post_user_created_signal, sender=User)
 
 
 
+class Category(models.Model):
+    # OUR 4 categories include : New , Contacted , Converted, Unconverted 
+    name = models.CharField(max_length=30)
+    organisation = models.ForeignKey(UserProfile,on_delete=models.CASCADE) # Tricky if you don't want to delete database choose ignore now when migrating.
 
 
+    def __str__(self):
+        return self.name
 
 

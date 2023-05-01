@@ -3,8 +3,8 @@ from django.core.mail import send_mail
 from django.http import HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import  TemplateView , ListView , DetailView, CreateView, UpdateView , DeleteView, FormView
-from .models import Lead 
-from .forms import LeadModelForm,CustomUserCreationForm,AssignAgentForm
+from .models import Lead , Category
+from .forms import LeadModelForm,CustomUserCreationForm,AssignAgentForm,LeadCategoryUpdateForm
 from agents.mixins import OrganisorAndLoginRequiredMixins
 
 # Create your views here.
@@ -206,3 +206,89 @@ class AssignAgentView(OrganisorAndLoginRequiredMixins,FormView):
         lead.save()
 
         return super(AssignAgentView, self).form_valid(form)
+    
+
+class CategoryListView(LoginRequiredMixin,ListView):
+    template_name = "leads/category_list.html"
+    context_object_name = "category_list"
+
+    def get_context_data(self,**kwargs):
+        context = super(CategoryListView, self).get_context_data(**kwargs)
+        user = self.request.user
+
+        if user.is_organisor:
+            queryset = Lead.objects.filter(
+                organisation = user.userprofile
+            )  
+        else:
+            queryset = Lead.objects.filter(
+                organisation = user.agent.organisation
+            )  
+        context.update({
+            "unassigned_lead_count": queryset.filter(category__isnull=True).count()
+        })
+        return context
+    # the query set is based on the organisation of the logged in user.
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Category.objects.filter(
+                organisation=user.userprofile
+            )  
+        else: 
+            queryset = Category.objects.filter(
+                agent__user=user.agent.organisation
+            )
+        return queryset 
+    
+
+
+class CategoryDetailView(LoginRequiredMixin,DetailView):
+    template_name = "leads/category_detail.html"
+    context_object_name = "category"
+
+    # def get_context_data(self,**kwargs):
+    #     context = super(CategoryDetailView, self).get_context_data(**kwargs)
+        
+    #     # Fetching all the leads belong to a specific category we use methods below
+    #     # queryset = Lead.objects.filter(category=self.get_object())
+    #     # self.get_object().lead_set.all()
+    #     leads_qs = self.get_object().leads.all() # using related_name with FK to fetch data
+
+    #     context.update({
+    #         "leads": leads_qs
+    #     })
+    #     return context
+    
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Category.objects.filter(
+                organisation=user.userprofile
+            )   
+        else: 
+            queryset = Category.objects.filter(
+                agent__user=user.agent.organisation
+            )
+        return queryset 
+    
+
+
+class LeadCategoryUpdateView(LoginRequiredMixin,UpdateView):
+    template_name = "leads/leads_category_update.html"
+    form_class = LeadCategoryUpdateForm
+
+    def get_queryset(self):
+        user = user.self.request
+
+        if user.is_organisor:
+            queryset = Lead.objects.filter(organisation=user.userprofile)
+        else:
+            queryset = Lead.objects.filter(organisation=user.agent.organisation)
+            queryset = queryset.filter(agent__user=user)
+        return queryset 
+
+    def get_success_url(self):
+        return reverse("leads:lead-detail", kwargs={"pk":self.get_object().id}) # grabbing primary key of object

@@ -43,3 +43,9 @@ class AssignAgentForm(forms.Form):
         self.fields["agents"].queryset = agents  
 
         
+
+
+class LeadCategoryUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Lead
+        fields = ('category',)
