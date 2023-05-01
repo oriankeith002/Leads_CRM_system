@@ -2,9 +2,9 @@ from django.shortcuts import render, redirect,reverse
 from django.core.mail import send_mail
 from django.http import HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView , ListView , DetailView, CreateView, UpdateView , DeleteView
+from django.views.generic import  TemplateView , ListView , DetailView, CreateView, UpdateView , DeleteView, FormView
 from .models import Lead 
-from .forms import LeadModelForm,CustomUserCreationForm
+from .forms import LeadModelForm,CustomUserCreationForm,AssignAgentForm
 from agents.mixins import OrganisorAndLoginRequiredMixins
 
 # Create your views here.
@@ -36,17 +36,40 @@ class LeadListView(LoginRequiredMixin,ListView):
 
         # queryset = Lead.object.all() # we avoid getting all the leads across all organizatons
         if user.is_organisor:
-            queryset = Lead.objects.filter(organisation=user.userprofile)
+            queryset = Lead.objects.filter(organisation=user.userprofile,agent__isnull=False)  
         else: # if they are not organisor then they are agent
         # if user.is_agent: # checking if logged in user is an agent
             # we want to filter the leads for the agent that is logged in based on their specific organisation
-            queryset = Lead.objects.filter(agent__user=user.agent.organisation) # this doesn't make extra queries on the database
-        
+            queryset = Lead.objects.filter(agent__user=user.agent.organisation,agent__isnull=False) # this doesn't make extra queries on the database
+            # Add agent__isnull=False to ensure querysets return only assigned leads.
+
             ## OBTAINED ALL LEADS OF THE ENTIRE ORGANISATION FOR either organisor or agent
             # filtering leads for the current logged in agent.
             # agent_user means filter the lead based on an agent where that agent has a user equal to the self.request.user
             queryset = queryset.filter(agent__user=user)
         return queryset # the final returned queryset
+
+
+    # Handling unassigned leads. 
+    # we overide the get_context_data method
+    # grab existing context using the super command
+    # then return the context
+
+    def get_context_data(self,**kwargs):
+        user = self.request.user
+        # getting the existing context
+        context = super(LeadListView,self).get_context_data(**kwargs)
+
+        # only users who are organisors can update the context
+        if user.is_organisor:
+            queryset = Lead.objects.filter(organisation=user.userprofile, agent__isnull=True) 
+            # filtering for where the agent is null with agent__isnull=True
+            # we pass in a dictionary of context we want to pass in
+            context.update({
+                "unassigned_leads": queryset
+            })
+
+        return context
 
 def lead_list(request):
     leads = Lead.objects.all()
@@ -155,3 +178,31 @@ def lead_delete(request,pk):
     lead = Lead.objects.get(id=pk)
     lead.delete()
     return redirect("/leads")
+
+
+
+class AssignAgentView(OrganisorAndLoginRequiredMixins,FormView):
+    template_name = "leads/assign_agent.html"
+    form_class = AssignAgentForm
+
+    def get_form_kwargs(self,**kwargs):
+        kwargs = super(AssignAgentView, self).get_form_kwargs(**kwargs)
+        kwargs.update({
+            "request": self.request # passing in the request into the form
+        })
+        return kwargs
+    
+    def get_success_url(self):
+        return reverse("leads:lead-list")
+    
+
+    def form_valid(self,form):
+        #print(form.data)
+        # we want to access the value that was submitted since this is not a modelform.
+        agent = form.cleaned_data["agent"]
+        # getting lead from the primary key
+        lead = Lead.objects.get(id=self.kwargs["pk"]) 
+        lead.agent = agent
+        lead.save()
+
+        return super(AssignAgentView, self).form_valid(form)
